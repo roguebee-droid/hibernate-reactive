@@ -11,6 +11,7 @@ import java.util.Collection;
 import java.util.List;
 
 import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.CurrentTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
 import org.junit.jupiter.api.Test;
@@ -45,6 +46,9 @@ public class TimestampTest extends BaseReactiveTest {
 						.chain( session::flush )
 						.invoke( () -> assertThat(
 								record.updated.truncatedTo( ChronoUnit.HOURS )
+						).isEqualTo( record.created.truncatedTo( ChronoUnit.HOURS ) ) )
+						.invoke( () -> assertThat(
+								record.current.truncatedTo( ChronoUnit.HOURS )
 						).isEqualTo( record.created.truncatedTo( ChronoUnit.HOURS ) ) )
 						.invoke( () -> record.text = "edited text" )
 						.chain( session::flush )
@@ -81,6 +85,7 @@ public class TimestampTest extends BaseReactiveTest {
 	private static void assertInstants(Record r) {
 		assertThat( r.created ).isNotNull();
 		assertThat( r.updated ).isNotNull();
+		assertThat( r.current ).isNotNull();
 		// Sometimes, when the test suite is fast enough, they might be the same
 		assertThat( r.updated )
 				.as( "Updated instant is before created. Updated[" + r.updated + "], Created[" + r.created + "]" )
@@ -90,11 +95,13 @@ public class TimestampTest extends BaseReactiveTest {
 	private static void assertInstants(Event e, History h) {
 		assertThat( e.history.created ).isNotNull();
 		assertThat( e.history.updated ).isNotNull();
+		assertThat( e.currentTimestampEmbedded.current ).isNotNull();
 		// Sometimes, when the test suite is fast enough, they might be the same:
 		assertThat( e.history.updated )
 				.as( "Updated instant is before created. Updated[" + e.history.updated + "], Created[" + e.history.created + "]" )
 				.isAfterOrEqualTo( e.history.created );
 		assertThat( e.history.created ).isEqualTo( h.created );
+		assertThat( e.currentTimestampEmbedded.current ).isEqualTo( h.created );
 
 	}
 
@@ -109,6 +116,8 @@ public class TimestampTest extends BaseReactiveTest {
 		Instant created;
 		@UpdateTimestamp
 		Instant updated;
+		@CurrentTimestamp
+		Instant current;
 	}
 
 	@Entity(name = "Event")
@@ -123,6 +132,8 @@ public class TimestampTest extends BaseReactiveTest {
 		@Embedded
 		public History history;
 
+		@Embedded
+		public CurrentTimestampEmbedded currentTimestampEmbedded;
 	}
 
 	@Embeddable
@@ -134,6 +145,12 @@ public class TimestampTest extends BaseReactiveTest {
 		@Column
 		@UpdateTimestamp
 		public LocalDateTime updated;
+	}
 
+	@Embeddable
+	static class CurrentTimestampEmbedded {
+		@Column
+		@CurrentTimestamp
+		public LocalDateTime current;
 	}
 }
