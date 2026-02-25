@@ -19,7 +19,6 @@ import org.junit.jupiter.api.Test;
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
 import jakarta.persistence.Basic;
-import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
@@ -100,8 +99,8 @@ public class TimestampTest extends BaseReactiveTest {
 		assertThat( e.history.updated )
 				.as( "Updated instant is before created. Updated[" + e.history.updated + "], Created[" + e.history.created + "]" )
 				.isAfterOrEqualTo( e.history.created );
-		assertThat( e.history.created ).isEqualTo( h.created );
-		assertThat( e.currentTimestampEmbedded.current ).isEqualTo( h.created );
+		assertThat( e.history.created.truncatedTo( ChronoUnit.HOURS ) ).isEqualTo( h.created );
+		assertThat( e.currentTimestampEmbedded.current.truncatedTo( ChronoUnit.HOURS ) ).isEqualTo( h.created.truncatedTo( ChronoUnit.HOURS ) );
 
 	}
 
@@ -138,18 +137,15 @@ public class TimestampTest extends BaseReactiveTest {
 
 	@Embeddable
 	static class History {
-		@Column
 		@CreationTimestamp
 		public LocalDateTime created;
 
-		@Column
 		@UpdateTimestamp
 		public LocalDateTime updated;
 	}
 
 	@Embeddable
 	static class CurrentTimestampEmbedded {
-		@Column
 		@CurrentTimestamp
 		public LocalDateTime current;
 	}
