@@ -27,6 +27,7 @@ import jakarta.persistence.Id;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hibernate.generator.EventType.INSERT;
 
 @Timeout(value = 10, timeUnit = MINUTES)
 public class TimestampTest extends BaseReactiveTest {
@@ -94,14 +95,18 @@ public class TimestampTest extends BaseReactiveTest {
 	private static void assertInstants(Event e, History h) {
 		assertThat( e.history.created ).isNotNull();
 		assertThat( e.history.updated ).isNotNull();
-		assertThat( e.currentTimestampEmbedded.current ).isNotNull();
+		assertThat( e.currentTimestampEmbedded.currentCreatedAt ).isNotNull();
+		assertThat( e.currentTimestampEmbedded.currentLastUpdatedAt ).isNotNull();
 		// Sometimes, when the test suite is fast enough, they might be the same:
 		assertThat( e.history.updated )
-				.as( "Updated instant is before created. Updated[" + e.history.updated + "], Created[" + e.history.created + "]" )
+				.as( "Updated instant is after created. Updated[" + e.history.updated + "], Created[" + e.history.created + "]" )
 				.isAfterOrEqualTo( e.history.created );
-		assertThat( e.history.created.truncatedTo( ChronoUnit.HOURS ) ).isEqualTo( h.created );
-		assertThat( e.currentTimestampEmbedded.current.truncatedTo( ChronoUnit.HOURS ) ).isEqualTo( h.created.truncatedTo( ChronoUnit.HOURS ) );
+		assertThat( e.history.created ).isEqualTo( h.created );
 
+		assertThat( e.currentTimestampEmbedded.currentCreatedAt.truncatedTo( ChronoUnit.HOURS ) ).isEqualTo( h.created.truncatedTo( ChronoUnit.HOURS ) );
+		assertThat( e.currentTimestampEmbedded.currentLastUpdatedAt )
+				.as( "Updated instant is after created. Updated[" + e.currentTimestampEmbedded.currentLastUpdatedAt + "], Created[" + e.currentTimestampEmbedded.currentCreatedAt + "]" )
+				.isAfterOrEqualTo( e.currentTimestampEmbedded.currentCreatedAt );
 	}
 
 	@Entity(name = "Record")
@@ -146,7 +151,9 @@ public class TimestampTest extends BaseReactiveTest {
 
 	@Embeddable
 	static class CurrentTimestampEmbedded {
+		@CurrentTimestamp(event = INSERT)
+		LocalDateTime currentCreatedAt;
 		@CurrentTimestamp
-		public LocalDateTime current;
+		LocalDateTime currentLastUpdatedAt;
 	}
 }
