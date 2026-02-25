@@ -10,6 +10,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.Collection;
 import java.util.List;
 
+import jakarta.persistence.*;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.CurrentTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
@@ -18,12 +19,6 @@ import org.junit.jupiter.api.Test;
 
 import io.vertx.junit5.Timeout;
 import io.vertx.junit5.VertxTestContext;
-import jakarta.persistence.Basic;
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.Embedded;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.Id;
 
 import static java.util.concurrent.TimeUnit.MINUTES;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -120,6 +115,7 @@ public class TimestampTest extends BaseReactiveTest {
 		Instant created;
 		@UpdateTimestamp
 		Instant updated;
+		@Version
 		@CurrentTimestamp
 		Instant current;
 	}
@@ -153,6 +149,7 @@ public class TimestampTest extends BaseReactiveTest {
 	static class CurrentTimestampEmbedded {
 		@CurrentTimestamp(event = INSERT)
 		LocalDateTime currentCreatedAt;
+
 		@CurrentTimestamp
 		LocalDateTime currentLastUpdatedAt;
 	}
